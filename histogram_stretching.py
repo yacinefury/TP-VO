@@ -1,0 +1,75 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Lecture de l'image
+img = cv2.imread('pont.pgm', cv2.IMREAD_GRAYSCALE)
+if img is None:
+    print("Erreur: Impossible de lire l'image")
+    exit()
+
+# Calculer l'histogramme original
+hist_orig = cv2.calcHist([img], [0], None, [256], [0, 256])
+x_values = np.arange(256)
+
+# Trouver les valeurs min et max
+min_val = np.min(img)
+max_val = np.max(img)
+
+# Étirement d'histogramme
+img_etiree = np.uint8(255 * (img - min_val) / (max_val - min_val))
+
+# Calculer l'histogramme de l'image étirée
+hist_etiree = cv2.calcHist([img_etiree], [0], None, [256], [0, 256])
+
+# Mesure de contraste de Michelson pour l'image originale
+michelson_orig = float(max_val - min_val) / float(max_val + min_val)
+
+# Mesure de contraste de Michelson pour l'image étirée
+min_val_etiree = np.min(img_etiree)
+max_val_etiree = np.max(img_etiree)
+michelson_etiree = float(max_val_etiree - min_val_etiree) / float(max_val_etiree + min_val_etiree)
+
+# Calcul du contraste RMS pour l'image originale
+img_float = img.astype(float)
+B_orig = np.mean(img_float)
+rms_orig = np.sqrt(np.mean((img_float - B_orig) ** 2))
+
+# Calcul du contraste RMS pour l'image étirée
+img_etiree_float = img_etiree.astype(float)
+B_etiree = np.mean(img_etiree_float)
+rms_etiree = np.sqrt(np.mean((img_etiree_float - B_etiree) ** 2))
+
+# Affichage des résultats
+plt.figure(figsize=(12, 10))
+
+plt.subplot(2, 2, 1)
+plt.imshow(img, cmap='gray')
+plt.title('Image Originale')
+plt.axis('off')
+
+plt.subplot(2, 2, 2)
+plt.imshow(img_etiree, cmap='gray')
+plt.title('Image avec Étirement d\'Histogramme')
+plt.axis('off')
+
+plt.subplot(2, 2, 3)
+plt.bar(x_values, hist_orig.flatten())
+plt.title('Histogramme Original')
+plt.xlim([0, 255])
+
+plt.subplot(2, 2, 4)
+plt.bar(x_values, hist_etiree.flatten())
+plt.title('Histogramme Étiré')
+plt.xlim([0, 255])
+
+plt.tight_layout()
+
+# Affichage des mesures de contraste
+print(f'Image Originale - Contraste Michelson: {michelson_orig:.4f}, Contraste RMS: {rms_orig:.4f}')
+print(f'Image Étirée - Contraste Michelson: {michelson_etiree:.4f}, Contraste RMS: {rms_etiree:.4f}')
+
+# Sauvegarde de l'image étirée
+cv2.imwrite('pont_etire.png', img_etiree)
+
+plt.show()
